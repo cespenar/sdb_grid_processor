@@ -8,4 +8,4 @@ setup(name='sdb_grid_processor',
     author_email='cespenar1@gmail.com',
     license='MIT',
     packages=['sdb_grid_processor'],
-    install_requires=['mesa_reader'])
+    install_requires=['mesa_reader', 'sqlalchemy'])

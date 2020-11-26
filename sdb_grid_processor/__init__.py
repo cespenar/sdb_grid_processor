@@ -2,11 +2,50 @@ import glob
 import itertools
 import os
 import re
-import shutil
 
 import mesa_reader as mesa
 import numpy as np
 import pandas as pd
+from sqlalchemy import Column, Float, Integer, String, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+Base = declarative_base()  # SQLAlchemy base class
+
+
+class Model(Base):
+    __tablename__ = 'models'
+
+    id = Column(Integer, primary_key=True)
+    m_i = Column(Float, nullable=False)
+    m_env = Column(Float, nullable=False)
+    rot_i = Column(Float, nullable=False)
+    z_i = Column(Float, nullable=False)
+    y_i = Column(Float, nullable=False)
+    fh = Column(Float, nullable=False)
+    fhe = Column(Float, nullable=False)
+    fsh = Column(Float, nullable=False)
+    mlt = Column(Float, nullable=False)
+    sc = Column(Float, nullable=False)
+    reimers = Column(Float, nullable=False)
+    blocker = Column(Float, nullable=False)
+    turbulence = Column(Float, nullable=False)
+    m = Column(Float, nullable=False)
+    rot = Column(Float, nullable=False)
+    model_number = Column(Integer, nullable=False)
+    level = Column(Integer, nullable=False)
+    m_he_core = Column(Float, nullable=False)
+    log_Teff = Column(Float, nullable=False)
+    log_g = Column(Float, nullable=False)
+    log_L = Column(Float, nullable=False)
+    radius = Column(Float, nullable=False)
+    age = Column(Float, nullable=False)
+    z_surf = Column(Float, nullable=False)
+    y_surf = Column(Float, nullable=False)
+    center_he4 = Column(Float, nullable=False)
+    custom_profile = Column(Float, nullable=False)
+    top_dir = Column(String, nullable=False)
+    log_dir = Column(String, nullable=False)
 
 
 class GridProcessor():
@@ -17,9 +56,16 @@ class GridProcessor():
     considered_models = np.arange(0.9, 0.05, -0.05)
     numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
 
-    def __init__(self, grid_dir, output_file):
+    def __init__(self, grid_dir, db_file, output_file):
         self.grid_dir = grid_dir
         self.output_file = output_file
+
+        self.db_file = db_file
+        self.engine = create_engine(f'sqlite:///{self.db_file}')
+        Session = sessionmaker(bind=self.engine)
+        Base.metadata.create_all(self.engine)
+        self.session = Session()
+
         self.log_dirs = self.find_all_log_dirs()
         self.number_of_models = len(
             self.log_dirs) * len(self.considered_models)
@@ -41,7 +87,8 @@ class GridProcessor():
                                                            ('rot', 'float64'),
                                                            ('model_number', 'int'),
                                                            ('level', 'int'),
-                                                           ('m_he_core', 'float64'),
+                                                           ('m_he_core',
+                                                            'float64'),
                                                            ('log_Teff', 'float64'),
                                                            ('log_g', 'float64'),
                                                            ('log_L', 'float64'),
@@ -58,19 +105,6 @@ class GridProcessor():
                                                            ('log_dir',
                                                             'U200'),
                                                            ])
-
-    def find_all_log_dirs(self):
-        """Returns list of LOG directories in the grid directory.
-
-        Returns
-        ----------
-        list
-            Flattened list of LOG directories.
-        """
-        top_dirs = glob.glob(os.path.join(self.grid_dir, 'logs_*'))
-        log_dirs = [glob.glob(os.path.join(directory, 'logs_*'))
-                    for directory in top_dirs]
-        return list(itertools.chain(*log_dirs))
 
     def evaluate_sdb_grid(self):
         """Reads models in a directory tree and creates a grid of parameters.
@@ -97,16 +131,30 @@ class GridProcessor():
                     print("No pulsational calculation availiable. Skipping the model.")
                     continue
                 top_dir = os.path.basename(os.path.split(log_dir)[0])
-                self.add_one_row(i, initial_parameters, history, data.model_number, \
-                    custom_profile, top_dir, os.path.basename(log_dir))
+                self.add_one_row(i, initial_parameters, history, data.model_number,
+                                 custom_profile, top_dir, os.path.basename(log_dir))
+                self.commit_model(i, initial_parameters, history, data.model_number,
+                                  custom_profile, top_dir, os.path.basename(log_dir))
                 i += 1
             print()
-        
-        self.save_grid_to_file()
-        
 
-    def add_one_row(self, i, initial_parameters, history, model_number, \
-        custom_profile, top_dir, log_dir):
+        self.save_grid_to_file()
+
+    def find_all_log_dirs(self):
+        """Returns list of LOG directories in the grid directory.
+
+        Returns
+        ----------
+        list
+            Flattened list of LOG directories.
+        """
+        top_dirs = glob.glob(os.path.join(self.grid_dir, 'logs_*'))
+        log_dirs = [glob.glob(os.path.join(directory, 'logs_*'))
+                    for directory in top_dirs]
+        return list(itertools.chain(*log_dirs))
+
+    def add_one_row(self, i, initial_parameters, history, model_number,
+                    custom_profile, top_dir, log_dir):
         """Populates a single row of the grid.
 
         Parameters
@@ -157,7 +205,63 @@ class GridProcessor():
         self.grid['custom_profile'][i] = custom_profile
         self.grid['top_dir'][i] = top_dir
         self.grid['log_dir'][i] = log_dir
-        
+
+    def commit_model(self, i, initial_parameters, history, model_number,
+                     custom_profile, top_dir, log_dir):
+        """Creates and commits a single row of models table.
+
+        Parameters
+        ----------
+        i : int
+            Index of the row.
+        initial_parameters : dict
+            Initial parameters of progenitor in dict format.
+        history : MesaData
+            Evolutionary track (MESA history file) as MesaData object.
+        model_numrer : int
+            Model number of a selected model.
+        custom profile : float
+            Approximated central helium abundance reported by profile name. 
+
+        Returns
+        ----------
+        """
+
+        model = Model(
+            m_i=initial_parameters['m_i'],
+            m_env=initial_parameters['m_env'],
+            rot_i=initial_parameters['rot'],
+            z_i=initial_parameters['z'],
+            y_i=initial_parameters['y'],
+            fh=initial_parameters['fh'],
+            fhe=initial_parameters['fhe'],
+            fsh=initial_parameters['fsh'],
+            mlt=initial_parameters['mlt'],
+            sc=initial_parameters['sc'],
+            reimers=initial_parameters['reimers'],
+            blocker=initial_parameters['blocker'],
+            turbulence=initial_parameters['turbulence'],
+            m=history.star_mass[model_number-1],
+            rot=history.v_surf_km_s[model_number-1],
+            model_number=model_number,
+            level=initial_parameters['level'],
+            m_he_core=history.star_mass[0] - initial_parameters['m_env'],
+            log_Teff=history.log_Teff[model_number-1],
+            log_g=history.log_g[model_number-1],
+            log_L=history.log_L[model_number-1],
+            radius=history.radius[model_number-1],
+            age=history.star_age[model_number-1],
+            z_surf=10.0**history.log_surf_cell_z[model_number-1],
+            y_surf=history.surface_he3[model_number-1] +
+            history.surface_he4[model_number-1],
+            center_he4=history.center_he4[model_number-1],
+            custom_profile=custom_profile,
+            top_dir=top_dir,
+            log_dir=log_dir
+        )
+
+        self.session.add(model)
+        self.session.commit()
 
     @staticmethod
     def read_logdir_name(log_dir):
@@ -208,7 +312,7 @@ class GridProcessor():
 
         df = pd.DataFrame(self.grid)
         df.to_csv(self.output_file, header=True, index=False, sep=' ')
-    
+
     @classmethod
     def set_considered_models(cls, start: float = 0.9, end: float = 0.05, step: float = -0.05) -> np.ndarray:
         """Sets a number of models with positive offset versus the default model.
@@ -232,7 +336,8 @@ class GridProcessor():
 if __name__ == "__main__":
 
     grid_dir = "/Users/cespenar/sdb/sdb_grid_processor/test_grid"
+    db_file = "test.db"
     output_file = "grid_mi1.0_z0.015_lvl0.txt"
 
-    g = GridProcessor(grid_dir, output_file)
+    g = GridProcessor(grid_dir, db_file, output_file)
     log_dirs = g.find_all_log_dirs()
