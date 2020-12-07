@@ -138,7 +138,7 @@ class GridProcessor():
                 i += 1
             print()
 
-        self.save_grid_to_file()
+        self.save_grid_to_txt_file()
 
     def find_all_log_dirs(self):
         """Returns list of LOG directories in the grid directory.
@@ -260,8 +260,60 @@ class GridProcessor():
             log_dir=log_dir
         )
 
-        self.session.add(model)
-        self.session.commit()
+        if not self.model_in_database(model):
+            self.session.add(model)
+            self.session.commit()
+
+    def model_in_database(self, model):
+        """Checks if a model is already in the database.
+
+        Parameters
+        ----------
+        model : Model
+            A model to be checked.
+        
+        Returns
+        ----------
+        bool
+            Is the model in the database?
+        """
+
+        count = self.session.query(Model).filter(
+            Model.m_i == model.m_i,
+            Model.m_env == model.m_env,
+            Model.rot_i == model.rot_i,
+            Model.z_i == model.z_i,
+            Model.y_i == model.y_i,
+            Model.fh == model.fh,
+            Model.fhe == model.fhe,
+            Model.fsh == model.fsh,
+            Model.mlt == model.mlt,
+            Model.sc == model.sc,
+            Model.reimers == model.reimers,
+            Model.blocker == model.blocker,
+            Model.turbulence == model.turbulence,
+            Model.m == model.m,
+            Model.rot == model.rot,
+            Model.model_number == model.model_number,
+            Model.level == model.level,
+            Model.m_he_core == model.m_he_core,
+            Model.log_Teff == model.log_Teff,
+            Model.log_g == model.log_g,
+            Model.log_L == model.log_L,
+            Model.radius == model.radius,
+            Model.age == model.age,
+            Model.z_surf == model.z_surf,
+            Model.y_surf == model.y_surf,
+            Model.center_he4 == model.center_he4,
+            Model.custom_profile == model.custom_profile,
+            Model.top_dir == model.top_dir,
+            Model.log_dir == model.log_dir
+        ).count()
+
+        if count:
+            return True
+        else:
+            return False
 
     @staticmethod
     def read_logdir_name(log_dir):
@@ -299,7 +351,7 @@ class GridProcessor():
 
         return values
 
-    def save_grid_to_file(self):
+    def save_grid_to_txt_file(self):
         """Saves the processed grid to a text file.
 
         Parameters
