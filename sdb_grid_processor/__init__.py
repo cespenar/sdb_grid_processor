@@ -282,12 +282,3 @@ class GridProcessor():
         values['model_number'] = int(s[15])
 
         return values
-
-
-if __name__ == "__main__":
-
-    grid_dir = "/Users/cespenar/sdb/sdb_grid_processor/test_grid"
-    db_file = "test.db"
-
-    g = GridProcessor(grid_dir, db_file)
-    log_dirs = g.find_all_log_dirs()
