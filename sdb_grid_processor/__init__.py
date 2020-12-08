@@ -10,7 +10,7 @@ from sqlalchemy import Column, Float, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-Base = declarative_base()  # SQLAlchemy base class
+Base = declarative_base()
 
 
 class Model(Base):
@@ -51,6 +51,37 @@ class Model(Base):
 class GridProcessor():
     """Structure containing a raw MESA grid of sdB stars.
 
+    Reads a grid and saves the models into a database.
+
+    Parameters
+    ----------
+    grid_dir : str
+        Directory containing the grid of models.
+    output_file : str
+        The name of output file.
+    output_dir : str
+        Output directory for .mod files of selected progenitors.
+
+    Attributes
+    ----------
+    grid_dir : str
+        Directory containing the grid of models.
+    db_file : str
+        Output database. 
+
+    Examples
+    ----------
+    >>> grid_dir = "test_grid"
+    >>> db_file = "test.db"
+
+    >>> g = GridProcessor(grid_dir, db_file)
+    >>> g.evaluate_sdb_grid()
+
+    Here `grid_dir` is a directory containing the calcualted MESA 
+    models, and `test.db` is an output database. The grid is at
+    first initialized and then it is evaluated and commited to
+    the databse.
+
     """
 
     numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
@@ -66,7 +97,7 @@ class GridProcessor():
 
     def evaluate_sdb_grid(self):
         """Reads models in a directory tree and creates a grid of parameters.
-        Saves the grid to a file.
+        Saves the grid to database.
 
         Parameters
         ----------
@@ -89,10 +120,8 @@ class GridProcessor():
                     print("No pulsational calculation availiable. Skipping the model.")
                     continue
                 top_dir = os.path.basename(os.path.split(log_dir)[0])
-                self.add_one_row(i, initial_parameters, history, data.model_number,
-                                 custom_profile, top_dir, os.path.basename(log_dir))
-                self.commit_model(i, initial_parameters, history, data.model_number,
-                                  custom_profile, top_dir, os.path.basename(log_dir))
+                self.commit_one_model(i, initial_parameters, history, data.model_number,
+                                      custom_profile, top_dir, os.path.basename(log_dir))
                 i += 1
             print()
 
@@ -109,9 +138,8 @@ class GridProcessor():
                     for directory in top_dirs]
         return list(itertools.chain(*log_dirs))
 
-
-    def commit_model(self, i, initial_parameters, history, model_number,
-                     custom_profile, top_dir, log_dir):
+    def commit_one_model(self, i, initial_parameters, history, model_number,
+                         custom_profile, top_dir, log_dir):
         """Creates and commits a single row of models table.
 
         Parameters
@@ -175,7 +203,7 @@ class GridProcessor():
         ----------
         model : Model
             A model to be checked.
-        
+
         Returns
         ----------
         bool

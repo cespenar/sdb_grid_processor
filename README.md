@@ -17,18 +17,18 @@ Uninstall by executing
 
 ## Sample usage
 
-A directory with top-level directories containing MESA log directories for a given initial mass and metallicity.
+A directory with containing MESA models.
 
     grid_dir = "test_grid"
 
-Output .txt file for the final grid:
+Database containing the final grid:
 
-    output_file = "test_grid.txt"
+    db_file = "test.db"
 
 Initialize a grid:
 
-    g = GridProcessor(grid_dir, output_file)
+    g = GridProcessor(grid_dir, db_file)
 
-Evaluate the grid. This method evaluated the grid and saves the output to a file.
+Evaluate the grid. This method evaluated the grid and saves the output to a database.
 
-    g.evaluate_initial_grid()
+    g.evaluate_sdb_grid()

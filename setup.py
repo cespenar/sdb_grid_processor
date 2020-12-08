@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='sdb_grid_processor',
-    version='0.0.3',
+    version='0.1.0',
     description='Tool for processing a calculated grid of MESA sdB stars.',
     url='https://github.com/cespenar/sdb_grid_processor',
     author='Jakub Ostrowski',
