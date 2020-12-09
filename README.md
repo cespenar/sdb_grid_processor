@@ -1,7 +1,7 @@
-# progenitor_grid
+# sdb_grid_processor
 =================
 
-Tool for processing a calculated grid of MESA sdB models.
+Tool for processing a calculated grid of MESA sdB models and 
 
 ## Installation
 Install by cloning the repository, `cd` into it and then execute
@@ -32,3 +32,6 @@ Initialize a grid:
 Evaluate the grid. This method evaluated the grid and saves the output to a database.
 
     g.evaluate_sdb_grid()
+
+The example folder contains a script that can be used to process a directory
+containing zipped models.
