@@ -5,7 +5,6 @@ import re
 
 import mesa_reader as mesa
 import numpy as np
-import pandas as pd
 from sqlalchemy import Column, Float, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
