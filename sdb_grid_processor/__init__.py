@@ -268,21 +268,20 @@ class GridProcessor():
 
         s = log_dir.split('_')
 
-        values = {}
-        values['m_i'] = float(s[1][2:])
-        values['m_env'] = float(s[2][4:])
-        values['rot'] = float(s[3][3:])
-        values['z'] = float(s[4][1:])
-        values['y'] = float(s[5][1:])
-        values['fh'] = float(s[6][2:])
-        values['fhe'] = float(s[7][3:])
-        values['fsh'] = float(s[8][3:])
-        values['mlt'] = float(s[9][3:])
-        values['sc'] = float(s[10][2:])
-        values['reimers'] = float(s[11][7:])
-        values['blocker'] = float(s[12][7:])
-        values['turbulence'] = float(s[13][10:])
-        values['level'] = int(s[14][3:])
-        values['model_number'] = int(s[15])
+        values = {'m_i': float(s[1][2:]),
+                  'm_env': float(s[2][4:]),
+                  'rot': float(s[3][3:]),
+                  'z': float(s[4][1:]),
+                  'y': float(s[5][1:]),
+                  'fh': float(s[6][2:]),
+                  'fhe': float(s[7][3:]),
+                  'fsh': float(s[8][3:]),
+                  'mlt': float(s[9][3:]),
+                  'sc': float(s[10][2:]),
+                  'reimers': float(s[11][7:]),
+                  'blocker': float(s[12][7:]),
+                  'turbulence': float(s[13][10:]),
+                  'level': int(s[14][3:]),
+                  'model_number': int(s[15])}
 
         return values
