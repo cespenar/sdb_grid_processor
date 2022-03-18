@@ -4,7 +4,6 @@ import os
 import re
 
 import mesa_reader as mesa
-import numpy as np
 from sqlalchemy import Column, Float, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -70,8 +69,8 @@ class GridProcessor():
 
     Examples
     ----------
-    >>> grid_dir = "test_grid"
-    >>> db_file = "test.db"
+    >>> grid_dir = 'test_grid'
+    >>> db_file = 'test.db'
 
     >>> g = GridProcessor(grid_dir, db_file)
     >>> g.evaluate_sdb_grid()
@@ -111,16 +110,22 @@ class GridProcessor():
             initial_parameters = self.read_logdir_name(
                 os.path.basename(log_dir))
             history = mesa.MesaData(os.path.join(log_dir, 'history.data'))
-            for profile in sorted(glob.glob(os.path.join(log_dir, 'custom_He*.data')), reverse=True):
+            for profile in sorted(
+                    glob.glob(os.path.join(log_dir, 'custom_He*.data')),
+                    reverse=True):
                 data = mesa.MesaData(profile)
                 rx = re.compile(self.numeric_const_pattern, re.VERBOSE)
                 custom_profile = rx.findall(os.path.basename(profile))[0]
-                if not os.path.isfile(os.path.join(log_dir, f'custom_He{custom_profile}_summary.txt')):
-                    print("No pulsational calculation availiable. Skipping the model.")
+                if not os.path.isfile(os.path.join(log_dir,
+                                                   f'custom_He{custom_profile}_summary.txt')):
+                    print(
+                        'No pulsational calculation availiable. Skipping the model.')
                     continue
                 top_dir = os.path.basename(os.path.split(log_dir)[0])
-                self.commit_one_model(i, initial_parameters, history, data.model_number,
-                                      custom_profile, top_dir, os.path.basename(log_dir))
+                self.commit_one_model(i, initial_parameters, history,
+                                      data.model_number,
+                                      custom_profile, top_dir,
+                                      os.path.basename(log_dir))
                 i += 1
             print()
 
@@ -172,20 +177,20 @@ class GridProcessor():
             reimers=initial_parameters['reimers'],
             blocker=initial_parameters['blocker'],
             turbulence=initial_parameters['turbulence'],
-            m=history.star_mass[model_number-1],
-            rot=history.v_surf_km_s[model_number-1],
+            m=history.star_mass[model_number - 1],
+            rot=history.v_surf_km_s[model_number - 1],
             model_number=model_number,
             level=initial_parameters['level'],
             m_he_core=history.star_mass[0] - initial_parameters['m_env'],
-            log_Teff=history.log_Teff[model_number-1],
-            log_g=history.log_g[model_number-1],
-            log_L=history.log_L[model_number-1],
-            radius=history.radius[model_number-1],
-            age=history.star_age[model_number-1],
-            z_surf=10.0**history.log_surf_cell_z[model_number-1],
-            y_surf=history.surface_he3[model_number-1] +
-            history.surface_he4[model_number-1],
-            center_he4=history.center_he4[model_number-1],
+            log_Teff=history.log_Teff[model_number - 1],
+            log_g=history.log_g[model_number - 1],
+            log_L=history.log_L[model_number - 1],
+            radius=history.radius[model_number - 1],
+            age=history.star_age[model_number - 1],
+            z_surf=10.0 ** history.log_surf_cell_z[model_number - 1],
+            y_surf=history.surface_he3[model_number - 1] +
+                   history.surface_he4[model_number - 1],
+            center_he4=history.center_he4[model_number - 1],
             custom_profile=custom_profile,
             top_dir=top_dir,
             log_dir=log_dir
